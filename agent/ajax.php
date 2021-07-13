@@ -1027,11 +1027,18 @@ switch ($_GET['mod']) {
             die(json_encode(array('code'=>'1','sign'=>$sign,'keys'=>'您的卡密如下：'.$keylist)));
         }
         break;
-    case 'tckeystatus':
+    case 'fidkeystatus':
         if(!$db->update('sq_fidkey',array('ID'=>$_POST['keyid'],'aid'=>$_SESSION['agent_id']),'AND',array('status'=>textbooltonum($_POST['status'])))){
             die('更新失败'.$db->geterror());
         }else{
-            die('成功');
+            die('修改成功');
+        }
+        break;
+    case 'keystatus':
+        if(!$db->update('sq_key',array('ID'=>$_POST['keyid'],'aid'=>$_SESSION['agent_id']),'AND',array('status'=>textbooltonum($_POST['status'])))){
+            die('更新失败'.$db->geterror());
+        }else{
+            die('修改成功');
         }
         break;
     case 'deltckey':
@@ -1135,7 +1142,7 @@ switch ($_GET['mod']) {
                 }
                 $sign = rand_str(32);
                 $_SESSION['cards'][$sign] = $keylist;
-                die('您的卡密已就绪，<a href="../ajax.php?mod=download&sign='.$sign.'">点击这里下载卡密</a>');
+                die(makejson(1,'success',array('sign'=>$sign)));
                 break;
             case 'ExportAll':
                 $result = $db->select_all_row('sq_fidkey','kami',array('fid'=>$_POST['fid'],'aid'=>$_SESSION['agent_id'],'status'=>1));
@@ -1145,19 +1152,19 @@ switch ($_GET['mod']) {
                 }
                 $sign = rand_str(32);
                 $_SESSION['cards'][$sign] = $keylist;
-                die('您的卡密已就绪，<a href="../ajax.php?mod=download&sign='.$sign.'">点击这里下载卡密</a>');
+                die(makejson(1,'success',array('sign'=>$sign)));
                 break;
             case 'DelNoUse':
                 $db->delete('sq_fidkey',array('usetime'=>0,'fid'=>$_POST['fid'],'status'=>1,'aid'=>$_SESSION['agent_id']),'AND');
-                die('成功删除'.(int)$db->affected_num().'行');
+                die(makejson(2,'success',array('nums'=>$db->affected_num())));
                 break;
             case 'DelUse':
                 $db->delete('sq_fidkey', '`usetime` > 0 AND `fid` = '.$_POST['fid'].' AND `aid` = '.$_SESSION['agent_id'].' AND `status` = 1','AND');
-                die('成功删除'.(int)$db->affected_num().'行');
+                die(makejson(2,'success',array('nums'=>$db->affected_num())));
                 break;
             case 'DelAll':
                 $db->delete('sq_fidkey',array('fid'=>$_POST['fid'],'aid'=>$_SESSION['agent_id']),'AND');
-                die('成功删除'.(int)$db->affected_num().'行');
+                die(makejson(2,'success',array('nums'=>$db->affected_num())));
                 break;
         }
         break;
@@ -1211,8 +1218,9 @@ switch ($_GET['mod']) {
         }
         break;
     case 'keylog':
-        if (!$result = $db->select_limit_row('sq_log_kami','*','',0,array('keyid'=>$_POST['keyid'],'aid'=>$_SESSION['agent_id']),'AND',"ORDER BY time DESC")){
-            die(makejson(-1,'数据库中没有记录'));
+        // if (!$result = $db->select_limit_row('sq_log_kami','*','',0,array('keyid'=>$_POST['keyid'],'aid'=>$_SESSION['agent_id']),'AND',"ORDER BY time DESC")){
+        if (!$result = $db->select_limit_row('sq_log_kami','*','',0,array('keyid'=>$_POST['keyid']),'AND',"ORDER BY time DESC")){
+            die(makejson(-1,'没有查询到使用记录'));
         }
         die(makejson(1,'success',array('items'=>$result)));
         break;
